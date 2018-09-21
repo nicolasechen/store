@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'mianapp',
+    'mainapp',
     'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',
