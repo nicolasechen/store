@@ -1,27 +1,9 @@
 {# templates/index.html #}
-
+{% extends "default/main.html" %}
 {% load staticfiles %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Elmz Store</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+{% block title %}Index{% endblock title %}
 
-    <link href="{% static 'bootstrap-4.13-dist/css/bootstrap.min.css' %}" type="text/css" rel="stylesheet" />
-    <script defer src="{% static 'fontawesome/v5.3.1/js/all.js' %}"></script>
-
-
-
-</head>
-<body>
-    <h1><i class="fas fa-shopping-cart"></i></h1>
-
-    <script type="text/javascript" src="jquery/jquery-3.3.1.min.js"></script>
-    <script type="text/javascript" src="popper/popper.min.js"></script>
-    <script type="text/javascript" src="bootstrap-4.13-dist/js/bootstrap.min.js"></script>
-
-</body>
-</html>
+{% block main %}
+<i class="far fa-money-bill-alt"></i>
+{% endblock main %}
