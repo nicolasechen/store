@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-from mainapp.views import get_index
+from mainapp.views import get_index, ajax_api
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^$', get_index, name='home' ),
+    url(r'^$', get_index, name='home'),
+    url(r'^api/$', ajax_api, name='api'),
 ]
