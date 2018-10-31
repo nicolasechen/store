@@ -15,10 +15,14 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-from mainapp.views import get_index, ajax_api
+from mainapp.views import get_index, ajax_api, get_settings, get_buying, get_selling
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', get_index, name='home'),
     url(r'^api/$', ajax_api, name='api'),
+    url(r'^settings/$', get_settings, name='settings'),
+    url(r'^buying/$', get_buying, name='buying'),
+    url(r'^selling/$', get_selling, name='selling'),
+
 ]

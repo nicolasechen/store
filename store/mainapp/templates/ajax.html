@@ -2,4 +2,23 @@
 
 {% load staticfiles %}
 {% load crispy_forms_tags %}
-{% crispy form %}
+
+{% if target == 'selling-change' or target == 'buying-change' or target == 'buying-order-add' %}
+    <form id="id-change-form">
+        <div class="modal-body">
+            <div class="form-group">
+                {% csrf_token %}
+                {% crispy form %}
+            </div>
+        </div>
+        <div class="modal-footer">
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-change-form"
+                        data-dismiss="modal">Save
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Cancel
+                </button>
+            </div>
+        </div>
+    </form>
+{% endif %}

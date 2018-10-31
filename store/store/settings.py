@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
@@ -27,12 +26,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
     'mainapp',
     'crispy_forms',
+    'django.contrib.humanize',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -65,18 +64,18 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            # 'libraries': {
-            #     'markdown_tags': 'endosys.templatetags.markdown_tags',
-            #     'memo_tags': 'works.templatetags.memo_tags',
-            #     'wlcaaa_tags':'wlcaaa.templatetags.wlcaaa_tags',
-            #     'endo_tags':'endosys.templatetags.endo_tags',
-            # },
+            'libraries': {
+                'common_tags': 'mainapp.templatetags.common_tags'
+                #     'markdown_tags': 'endosys.templatetags.markdown_tags',
+                #     'memo_tags': 'works.templatetags.memo_tags',
+                #     'wlcaaa_tags':'wlcaaa.templatetags.wlcaaa_tags',
+                #     'endo_tags':'endosys.templatetags.endo_tags',
+            },
         },
     },
 ]
 
 WSGI_APPLICATION = 'store.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
@@ -87,7 +86,6 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -107,20 +105,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Asia/Taipei'
+# TIME_ZONE = 'Asia/Taipei'
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
-
+USE_TZ = False
+TIME_ZONE = 'Asia/Taipei'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
@@ -129,3 +126,29 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"), ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'normal': {
+            'format': '[%(levelname)s] %(asctime)s | %(name)s:%(lineno)d | %(message)s'
+        },
+        'simple': {
+            'format': '[%(levelname)s] %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',  # Default logs to stderr
+            'formatter': 'normal',  # use the above "normal" formatter
+            # 'filters': ['require_debug_true'],  # add filters
+        },
+    },
+    'loggers': {
+        '': {  # means "root logger"
+            'handlers': ['console'],  # use the above "console" handler
+            'level': 'DEBUG',  # logging level
+        },
+    },
+}
