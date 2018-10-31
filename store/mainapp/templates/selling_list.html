@@ -1,0 +1,214 @@
+{# templates/index.html #}
+{% extends "default/main.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load common_tags %}
+{% load humanize %}
+
+{% block title %}Selling{% endblock title %}
+
+{% block main %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2">
+        <h1 class="h2"><i class="fas fa-dollar-sign"></i> Selling</h1>
+    </div>
+    <div class="pb-5 mt-1 col-11">
+        <div class="mb-2 pt-0 row">
+            <div class="col-3">
+                <div class="input-group" style="width: 75%">
+                    <label for="id_date" class="h6 mr-2 align-middle">Date: </label>
+                    <input type="text" name="date" class="form-control-sm dateinput form-control"
+                           style="text-align: center;" value="{{ date }}" id="id_date">
+                    <span class="input-group-append">
+                    <button class="btn btn-sm btn-date" type="button">
+                    <i class="far fa-calendar-alt"></i></button>
+                </span>
+                </div>
+            </div>
+            <div class="col-5">&nbsp;</div>
+            <div class="col-4 row text-right border" style="border-style: dashed!important;">
+                <div class="col-6 text-left">
+                    <label class="h6">Total Income:</label>
+                    <span class="h6">$<span style="float: right">{{ total.income|floatformat:2|intcomma }}</span></span>
+                </div>
+                <div class="col-6 text-left">
+                    <label class="h6">Total Profit:</label>
+                    <span class="h6">$<span style="float: right">{{ total.profit|floatformat:2|intcomma }}</span></span>
+                </div>
+
+            </div>
+        </div>
+
+        <table class="table table-sm table-bordered table-light table-striped table-hover mb-3">
+            <thead>
+            <tr class="text-md-center align-middle">
+                <th width="50">#</th>
+                <th width="130">Date</th>
+                <th width="100">Time</th>
+                <th width="12%">Category</th>
+                <th>Items</th>
+                <th width="80">QTY</th>
+                <th width="120">Price</th>
+                <th width="120">Subtotal</th>
+                <th width="120">Cost/Each</th>
+                <th width="120">Profit/Each</th>
+                <th width="60"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for se in sells %}
+                <tr class="text-md-center align-middle">
+                    <th>{{ forloop.counter }}</th>
+                    <td>{{ se.date|date:"Y-m-d" }}</td>
+                    <td>{{ se.time|time:"H:i" }}</td>
+                    <td>{{ se.item.category }}</td>
+                    <td>{{ se.item.name }}</td>
+                    <td>{{ se.qty }}</td>
+                    <td class="text-md-left">$
+                        <div style="float: right">{{ se.price|floatformat:2|intcomma }}</div>
+                    </td>
+                    <td class="text-md-left">$
+                        <div style="float: right">{{ se.qty|get_times:se.price|floatformat:2|intcomma }}</div>
+                    </td>
+                    <td class="text-md-left">$
+                        <div style="float: right">{{ se.cost|floatformat:2|intcomma }}</div>
+                    </td>
+                    <td class="text-md-left">$
+                        <div style="float: right">{{ se|get_sell_profit|floatformat:2|intcomma }}</div>
+                    </td>
+                    <td>
+                        <a href="#" class="text-secondary btn-edit" data-key="{{ se.pk }}" data-toggle="modal"
+                           data-target="#modal-change"><i class="fas fa-pen-square"></i></a>&nbsp;
+                        <a href="#" class="text-secondary btn-del" data-key="{{ se.pk }}"><i
+                                class="fas fa-minus-square"></i></a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <nav aria-label="Page navigation" class="mb-5">
+            <ul class="mt-2 pagination justify-content-end">
+                {# 上一页，这里需要用到has_previous方法判断是否有上一页 #}
+                <li class="page-item">
+                    <a href="{% url 'selling' %}?{{ url_get }}&p=1" class="page-link text-secondary"
+                       aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                {# 遍历所有页码 #}
+                {% for page in pages.page_range %}
+                    <li class="page-item"><a href="{% url 'selling' %}?{{ url_get }}&p={{ page }}"
+                                             class="page-link text-secondary">{{ page }}</a></li>
+                {% endfor %}
+
+                <li class="page-item">
+                    <a href="{% url 'selling' %}?{{ url_get }}&p={{ pages.num_pages }}" aria-label="Next"
+                       class="page-link text-secondary">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="modal fade" id="modal-change" tabindex="-1">
+        <div class="modal-dialog" style="max-width: 450px">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6>Change Selling</h6>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div id="id-modal-change-body">
+                    ...
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock main %}
+
+{% block js %}
+    <script type="text/javascript">
+        (function ($) {
+
+            /*** date picker ***/
+            var id_date = $('#id_date');
+
+            id_date.datepicker({
+                dateFormat: 'yy-mm-dd',
+            });
+
+            id_date.change(function () {
+                location = '{% url 'selling' %}?t=sl&d=' + $(this).val();
+            });
+
+            $('.btn-date').click(function () {
+                id_date.focus();
+            });
+            /*** ############ ***/
+
+            $('.btn-edit').click(function () {
+                var url = '{% url 'api' %}?t=selling-change&spk=' + $(this).data('key');
+                $.ajax({
+                    method: "GET",
+                    url: url,
+                    success: function (ret) {
+                        $('#id-modal-change-body').html(ret);
+                        // 物品更改時重新查詢單價與成本
+                        $('#id_item').change(function () {
+                            var ipk = $(this).val();
+                            $.ajax({
+                                method: "GET",
+                                url: '{% url 'api' %}?t=selling&act=1&ipk=' + ipk,
+                                cache: false,
+                                success: function (ret) {
+                                    console.log(ret);
+                                    $('#id_price').val(ret.price);
+                                    $('#id_cost').val(ret.cost);
+                                }
+                            });
+                        });
+                        $('#btn-change-form').click(function () {
+                            $('#id-change-form').ajaxSubmit({
+                                method: "POST",
+                                url: url,
+                                success: function (ret) {
+                                    console.log(ret);
+                                    if (ret.is_success) {
+                                        location.reload();
+                                    }
+                                }
+                            })
+                        });
+                    }
+                });
+            });
+
+            $('.btn-del').click(function () {
+                var url = '{% url 'api' %}?t=selling-change&spk=' + $(this).data('key');
+                if (confirm("This action CANNOT be restored,\n Are you sure??") === true) {
+                    $.ajax({
+                        method: 'DELETE',
+                        url: url,
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                        },
+                        success: function (ret) {
+                            console.log(ret);
+                            if (ret.is_success) {
+                                window.location.href = ret.url;
+                            }
+                        }
+                    });
+
+                }
+            });
+        })(jQuery);
+
+    </script>
+
+{% endblock js %}

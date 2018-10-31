@@ -1,0 +1,206 @@
+{# templates/index.html #}
+{% extends "default/main.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load common_tags %}
+
+{% block title %}Selling {% endblock title %}
+
+{% block main %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2">
+        <h1 class="h2"><i class="fas fa-dollar-sign"></i> Selling</h1>
+    </div>
+
+    <div style="width: 70%">
+        {% if open_amount is None %}
+        <div>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Warning!</strong> Opening money not yet set. &nbsp;&nbsp;<a href="#" onclick="set_opening()"
+                                                                                    class="alert-link">Click
+                here</a>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        <form method="post" class="form-group">
+            {% csrf_token %}
+
+            <div id="order_form" class="form-group mb-2 ml-2">
+                {% crispy form %}
+            </div>
+
+            <div id="buying_form" class="form-group border p-4">
+                <div class="row m-0 font-weight-bold align-middle text-md-center">
+                    <label class="col-2"></label>
+                    <label class="col-4">Item</label>
+                    <label class="col-1">QTY</label>
+                    <label class="col-1">Price</label>
+                    <label class="col-1">Subtotal</label>
+                    <label class="col-1">&nbsp;</label>
+                    <label class="col-1 ml-2">Stock</label>
+                </div>
+
+                {{ formset.management_form }}
+                {% for form in formset %}
+                    <div class="item">
+                        {% crispy form formset.helper %}
+                    </div>
+                {% endfor %}
+                <div class="row border-top p-3 m-2 ">
+                    <div class="col-7">
+                        <button href="#" class="item-add btn btn-sm btn-outline-secondary" accesskey="a">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                    <div class="col-2">
+                        <label class="font-weight-bold">Total</label>
+                        <span id="id_total" style="float: right">0.00</span>
+                    </div>
+                </div>
+
+            </div>
+            <div class="text-md-right">
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-edit"></i> Save
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload();">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock main %}
+
+{% block js %}
+    <script type="text/javascript">
+        (function ($) {
+            $('.item-add').click(function (e) {
+                e.preventDefault();
+
+                var lastElement = $('.item:last');
+                var totalForms = $('#id_form-TOTAL_FORMS');
+                var total = parseInt(totalForms.val());
+                console.log(total);
+                var newElement = lastElement.clone(true);
+
+                newElement.find(':input').each(
+                    function () {
+                        var name = $(this).attr('name').replace(
+                            '-' + (total - 1) + '-',
+                            '-' + total + '-'
+                        );
+                        console.log(name);
+                        $(this).attr({'name': name}).val('').removeAttr('checked');
+                    }
+                );
+                newElement.find('*').each(
+                    function () {
+                        var id = $(this).attr('id');
+                        if (id) {
+                            $(this).attr('id', id.replace(
+                                '-' + (total - 1) + '-',
+                                '-' + total + '-'
+                            ));
+                        }
+                    }
+                );
+                totalForms.val(total + 1);
+                newElement.insertAfter(lastElement);
+                update_no();
+            });
+            $('.ipt_field').change(function (e) {
+                var id = parseInt($(this).attr('id').split('-')[1]);
+                update_field(id);
+                update_qty(id);
+                update_total();
+                // alert($(this).attr('id'));
+            });
+
+            $('.ipt_item').change(function (e) {
+                var id = parseInt($(this).attr('id').split('-')[1]);
+                get_price(id);
+            });
+
+            //get_price(0);
+            update_no();
+
+            $('#id_date').datepicker({
+                dateFormat: 'yy-mm-dd',
+            });
+            $('.btn-date').click(function () {
+                $('#id_date').focus();
+            });
+
+        })(jQuery);
+
+        function update_qty(id) {
+            var qty = $('#id_form-' + id + '-qty');
+            if (qty.val() === null || qty.val() <= 0) {
+                qty.val(1)
+            }
+        }
+
+        function update_field(id) {
+            var qty = $('#id_form-' + id + '-qty').val();
+            var price = $('#id_form-' + id + '-price').val();
+            var subtotal = $('#id_form-' + id + '-subtotal');
+            // console.log('qty:' + qty);
+
+            if ((qty >= 1) && (price !== 0)) {
+                subtotal.val(qty * price);
+            }
+
+        }
+
+        function update_total() {
+            var total_cost = 0;
+            var totalForms = parseInt($('#id_form-TOTAL_FORMS').val());
+            for (var x = 0; x <= totalForms; x++) {
+                subtotal = $('#id_form-' + x + '-subtotal').val();
+                if (subtotal > 0) {
+                    total_cost += parseInt(subtotal);
+                }
+            }
+            $('#id_total').text(total_cost);
+        }
+
+        function update_no() {
+            $('.ipt_no').each(
+                function () {
+                    $(this).val(parseInt($(this).attr('id').split('-')[1]) + 1);
+                }
+            );
+        }
+
+        function get_price(x) {
+            var ipk = $('#id_form-' + x + '-item').val();
+            $.ajax({
+                method: "GET",
+                url: '{% url 'api' %}?t=selling&act=1&ipk=' + ipk,
+                //async: false,
+                cache: false,
+                success: function (ret) {
+                    console.log(ret);
+                    update_price_stock(x, ret.price, ret.stock);
+                    update_field(x);
+                    update_total();
+                }
+            });
+        }
+
+        function update_price_stock(x, price, stock) {
+            $('#id_form-' + x + '-price').val(price);
+            $('#id_form-' + x + '-stock').val(stock);
+        }
+
+        function set_opening() {
+            window.open("{% url 'selling' %}?t=op", "popup_page",
+                "status=1,height=200,width=350,toolbar=0,resizeable=0,top=200,left=800")
+        }
+    </script>
+
+{% endblock js %}

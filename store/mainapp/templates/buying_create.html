@@ -1,0 +1,171 @@
+{# templates/index.html #}
+{% extends "default/main.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load common_tags %}
+
+{% block title %}Buying{% endblock title %}
+
+{% block main %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2">
+        <h1 class="h2"><i class="fas fa-shopping-bag"></i> Buying</h1>
+    </div>
+
+    <div style="width: 90%">
+        <form method="post" class="form-group">
+            {% csrf_token %}
+
+            <div id="order_form" class="form-group mb-2 ml-2">
+                {% crispy form %}
+            </div>
+
+            <div id="buying_form" class="form-group border p-4">
+                <div class="row m-0 font-weight-bold align-middle text-md-center">
+                    <label class="col-1"></label>
+                    <label class="col-4">Item</label>
+                    <label class="col-2">Cost</label>
+                    <label class="col-1">QTY/Buy</label>
+                    <label class="col-1">QTY/Set</label>
+                    <label class="col-1">Cost/Each</label>
+                    <label class="col-1">QTY/Stock</label>
+                    <label class="col-1">Subtotal</label>
+                    {#        <label class="col-2"></label>#}
+                </div>
+
+                {{ formset.management_form }}
+                {% for form in formset %}
+                    <div class="item">
+                        {% crispy form formset.helper %}
+                    </div>
+                {% endfor %}
+                <div class="row border-top p-3 m-2">
+                    <div class="col-10">
+                        <button href="#" class="item-add btn btn-sm btn-outline-secondary" accesskey="a">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                    <div class="col-2">
+                        <label class="font-weight-bold">Total</label>
+                        <span id="id_total" style="float: right">0.00</span>
+                    </div>
+                </div>
+
+            </div>
+            <div class="text-md-right">
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-edit"></i> Update
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.href='{% url 'buying' %}?t=bl';">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock main %}
+
+{% block js %}
+
+    <script type="text/javascript">
+        (function ($) {
+            $('.item-add').click(function (e) {
+                e.preventDefault();
+
+                var lastElement = $('.item:last');
+                var totalForms = $('#id_form-TOTAL_FORMS');
+                var total = parseInt(totalForms.val());
+                console.log(total);
+                var newElement = lastElement.clone(true);
+
+                newElement.find(':input').each(
+                    function () {
+                        var name = $(this).attr('name').replace(
+                            '-' + (total - 1) + '-',
+                            '-' + total + '-'
+                        );
+                        console.log(name);
+                        $(this).attr({'name': name}).val('').removeAttr('checked');
+                    }
+                );
+                newElement.find('*').each(
+                    function () {
+                        var id = $(this).attr('id');
+                        if (id) {
+                            $(this).attr('id', id.replace(
+                                '-' + (total - 1) + '-',
+                                '-' + total + '-'
+                            ));
+                        }
+                    }
+                );
+                totalForms.val(total + 1);
+                newElement.insertAfter(lastElement);
+                update_no();
+            });
+            $('.ipt_field').change(function (e) {
+
+                update_field($(this));
+                update_qty_set($(this));
+                // alert($(this).attr('id'));
+            });
+            update_no();
+
+            $('#id_date').datepicker({
+                dateFormat: 'yy-mm-dd',
+            });
+            $('.btn-date').click(function () {
+                $('#id_date').focus();
+            })
+
+        })(jQuery);
+        function update_qty_set(obj) {
+            var id = parseInt(obj.attr('id').split('-')[1]);
+            var qty_set = $('#id_form-' + id + '-qty_set');
+            if (qty_set.val() === null || qty_set.val() <= 0){
+                qty_set.val(1)
+            }
+        }
+
+        function update_field(obj) {
+
+            var id = parseInt(obj.attr('id').split('-')[1]);
+            var cost = $('#id_form-' + id + '-cost').val();
+            var qty_buy = $('#id_form-' + id + '-qty_buy').val();
+            var qty_set = $('#id_form-' + id + '-qty_set').val();
+            var cost_each = $('#id_form-' + id + '-cost_of_each');
+            var total_buy = $('#id_form-' + id + '-total_of_buy');
+            var subtotal = $('#id_form-' + id + '-subtotal');
+
+            if ((qty_buy > 0) && (qty_set > 0)) {
+                total_buy.val(qty_buy * qty_set);
+            }
+            if (cost > 0 && qty_set > 0) {
+                cost_each.val(Math.round((cost / qty_set) * 100) / 100);
+            }
+            if (cost > 0 && qty_buy > 0) {
+                subtotal.val(Math.round((cost * qty_buy) * 100) / 100);
+            }
+            var total_cost = 0;
+            var totalForms = parseInt($('#id_form-TOTAL_FORMS').val());
+            for (var x = 0; x <= totalForms; x++) {
+                var subtotal = $('#id_form-' + x + '-subtotal').val();
+                if (subtotal > 0) {
+                    total_cost += parseInt(subtotal);
+                }
+            }
+            $('#id_total').text(total_cost);
+
+        }
+
+
+        function update_no() {
+            $('.ipt_no').each(
+                function () {
+                    $(this).val(parseInt($(this).attr('id').split('-')[1]) + 1);
+                }
+            );
+        }
+    </script>
+
+{% endblock js %}

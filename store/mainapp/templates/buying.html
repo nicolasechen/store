@@ -1,0 +1,151 @@
+{# templates/index.html #}
+{% extends "default/main.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load common_tags %}
+
+{% block title %}Buying{% endblock title %}
+
+{% block main %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2">
+        <h1 class="h2"><i class="fas fa-shopping-bag"></i> Buying</h1>
+    </div>
+    {% if target == 'bl' %}
+        <div class="col-5 pb-5 mt-1">
+            <div class="text-md-right mb-2 pt-0"><button class="btn btn-sm btn-outline-secondary"><i class="fas fa-plus"></i> Add</button></div>
+            <table class="table table-sm table-bordered table-light table-striped table-hover mb-3">
+                <thead>
+                <tr class="text-md-center align-middle">
+                    <th width="50">#</th>
+                    <th width="150">Date</th>
+                    <th>Vendor</th>
+                    <th width="120">Total Cost</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for bo in bos %}
+                    <tr class="text-md-center align-middle">
+                        <th>{{ forloop.counter }}</th>
+                        <td>{{ bo.date|date:"Y-m-d" }}</td>
+                        <td>{{ bo.vendor.name }}</td>
+                        <td class="text-md-left">$
+                            <div style="float: right">{{ bo|get_buyingorder_total }}</div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <nav aria-label="Page navigation" class="mb-5">
+                <ul class="mt-2 pagination justify-content-end">
+                    {# 上一页，这里需要用到has_previous方法判断是否有上一页 #}
+                    <li class="page-item">
+                        <a href="{% url 'buying'%}?{{ url_get }}&p=1" class="page-link text-secondary" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    {# 遍历所有页码 #}
+                    {% for page in pages.page_range %}
+                        <li class="page-item"><a href="{% url 'buying'%}?{{ url_get }}&p={{ page }}" class="page-link text-secondary">{{ page }}</a></li>
+                    {% endfor %}
+
+                    <li class="page-item">
+                        <a href="{% url 'buying'%}?{{ url_get }}&p={{ pages.num_pages }}" aria-label="Next" class="page-link text-secondary">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    {% endif %}
+    {% if target == 'bn' %}
+        <div class="row m-0 font-weight-bold">
+            {#        <label class="col-2">Category</label>#}
+            <label class="col-3">Item</label>
+            <label class="col-1">Cost</label>
+            <label class="col-1">QTY for Buy</label>
+            <label class="col-1">QTY of Set</label>
+            <label class="col-1 ml-3">Total QTY</label>
+            <label class="col-1 ">Cost of Each</label>
+            {#        <label class="col-2"></label>#}
+        </div>
+        <form method="post" class="form-group form-control-sm">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            {% for form in formset %}
+                <div class="item">
+                    {% crispy form formset.helper %}
+                </div>
+            {% endfor %}
+            {#        {% crispy formset  %}#}
+            <div class="btn-group btn-group-sm mt-3">
+                <button href="#" class="item-add btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-edit"></i> Update
+                </button>
+            </div>
+        </form>
+    {% endif %}
+
+{% endblock main %}
+
+{% block js %}
+    <script type="text/javascript">
+        (function ($) {
+            $('.item-add').click(function (e) {
+                e.preventDefault();
+
+                var lastElement = $('.item:last');
+                var totalForms = $('#id_item_set-TOTAL_FORMS');
+                var total = parseInt(totalForms.val());
+                console.log(total);
+                var newElement = lastElement.clone(true);
+
+                newElement.find(':input').each(
+                    function () {
+                        var name = $(this).attr('name').replace(
+                            '-' + (total - 1) + '-',
+                            '-' + total + '-'
+                        );
+                        console.log(name);
+                        $(this).attr({'name': name}).val('').removeAttr('checked');
+                    }
+                );
+                newElement.find('*').each(
+                    function () {
+                        var id = $(this).attr('id');
+                        if (id) {
+                            $(this).attr('id', id.replace(
+                                '-' + (total - 1) + '-',
+                                '-' + total + '-'
+                            ));
+                        }
+                        ;
+                    }
+                );
+                totalForms.val(total + 1);
+                newElement.insertAfter(lastElement);
+
+            });
+            $('.ipt-price').change(function (e) {
+                update_profit();
+            });
+            update_profit();
+        })(jQuery);
+
+        function update_profit() {
+            var total = $('#id_item_set-TOTAL_FORMS').val();
+            console.log(total);
+            for (var x = 0; x <= total; x++) {
+                var profit = $('#id_item_set-' + x + '-profit');
+                var cost = $('#id_item_set-' + x + '-cost').val();
+                var price = $('#id_item_set-' + x + '-price').val();
+                var profit_val = price - cost;
+                if (profit_val !== 0) profit.val(Math.round(profit_val * 100) / 100);
+            }
+        }
+    </script>
+
+{% endblock js %}

@@ -1,0 +1,154 @@
+{# templates/index.html #}
+{% extends "default/main.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load common_tags %}
+
+{% block title %}Settings{% endblock title %}
+
+{% block main %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3">
+        <h1 class="h2"><i class="fas fa-cog"></i> Settings</h1>
+    </div>
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link {% is_active_get request 't=category' %}"
+               href="{% url 'settings' %}?t=category">Category</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% is_active_get request 't=items' %}"
+               href="{% url 'settings' %}?t=items&cpk=1">Items</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% is_active_get request 't=vendor' %}"
+               href="{% url 'settings' %}?t=vendor">Vendor</a>
+        </li>
+    </ul>
+
+    {% if target == 'items' %}
+        <div class="row m-0 mb-4">
+            <div class="col-2 font-weight-bold"><label for="category_select">Category </label>
+                <select id="category_select" class="form-control form-control-sm"
+                        onchange="location = '{% url 'settings' %}?t=items&cpk='+this.options[this.selectedIndex].value;">
+                    <optgroup label="Category"></optgroup>
+                    {% for list in categorys_list %}
+                        <option value="{{ list.1 }}" {% if cpk == list.1 %}selected{% endif %}>{{ list.0 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    {% endif %}
+    <div class="row m-0 font-weight-bold">
+        <label class="col-2">Name</label>
+        {% if target == 'items' %}
+            <label class="col-1">Price of Sale</label>
+            <label class="col-1 ml-3">Cost</label>
+            <label class="col-1">Profit</label>
+            <label class="col-1">Stock</label>
+        {% endif %}
+        <label class="col-2"></label>
+    </div>
+    <form method="post" class="form-group form-control-sm">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            <div class="item">
+                {% crispy form formset.helper %}
+            </div>
+        {% endfor %}
+{#        <div class="">#}
+{#        AAAA#}
+{#            {{ formset.error_count }}#}
+{#            {% if formset.total_error_count %}#}
+{#                <ul class="errorList">#}
+{#                    {% for dict in formset.errors %}#}
+{#                        {% for error in dict.values %}#}
+{#                            <li>{{ error }}</li>#}
+{#                        {% endfor %}#}
+{#                    {% endfor %}#}
+{#                </ul>#}
+{#            {% endif %}#}
+{#        </div>#}
+        <div class="btn-group btn-group-sm mt-3">
+            <button href="#" class="item-add btn btn-sm btn-outline-secondary">
+                <i class="fas fa-plus"></i> Add
+            </button>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-edit"></i> Update
+            </button>
+        </div>
+    </form>
+
+
+
+{% endblock main %}
+
+{% block js %}
+    <script type="text/javascript">
+        (function ($) {
+            $('.item-add').click(function (e) {
+                e.preventDefault();
+
+                var lastElement = $('.item:last');
+                var totalForms = $('#id_item_set-TOTAL_FORMS');
+                var total = parseInt(totalForms.val());
+                console.log(total);
+                var newElement = lastElement.clone(true);
+
+                newElement.find(':input').each(
+                    function () {
+                        var name = $(this).attr('name').replace(
+                            '-' + (total - 1) + '-',
+                            '-' + total + '-'
+                        );
+                        console.log(name);
+                        $(this).attr({'name': name}).val('').removeAttr('checked');
+                    }
+                );
+                newElement.find('*').each(
+                    function () {
+                        var id = $(this).attr('id');
+                        if (id) {
+                            $(this).attr('id', id.replace(
+                                '-' + (total - 1) + '-',
+                                '-' + total + '-'
+                            ));
+                        }
+                        ;
+                    }
+                );
+
+                totalForms.val(total + 1);
+                newElement.insertAfter(lastElement);
+
+            });
+            $('.ipt-price').change(function (e) {
+                update_profit();
+            });
+            $('.ipt-item').change(function (e) {
+               var x = parseInt($(this).attr('id').split('-')[1]);
+
+               var price = $('#id_item_set-' + x + '-price');
+                console.log(price.val());
+               if (!(price.val() >= 0) || (price.val() === undefined)|| (price.val() === '')) {
+                   console.log(x);
+                   price.val(0);
+               }
+            });
+            update_profit();
+        })(jQuery);
+
+        function update_profit() {
+            var total = $('#id_item_set-TOTAL_FORMS').val();
+            console.log(total);
+            for (var x = 0; x <= total; x++) {
+                var profit = $('#id_item_set-' + x + '-profit');
+                var cost = $('#id_item_set-' + x + '-cost').val();
+                var price = $('#id_item_set-' + x + '-price').val();
+                var profit_val = price - cost;
+                if (profit_val !== 0) profit.val(Math.round(profit_val * 100) / 100);
+            }
+        }
+    </script>
+
+{% endblock js %}

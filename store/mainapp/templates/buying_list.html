@@ -1,0 +1,109 @@
+{# templates/index.html #}
+{% extends "default/main.html" %}
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+{% load common_tags %}
+
+{% block title %}Buying{% endblock title %}
+
+{% block main %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2">
+        <h1 class="h2"><i class="fas fa-shopping-bag"></i> Buying</h1>
+    </div>
+    <div class="pb-5 mt-1 col-11">
+        <div class="text-md-right mb-2 pt-0">
+            <button class="btn btn-sm btn-outline-secondary"
+                    onclick="location = '{% url 'buying' %}?t=bn';">
+                <i class="fas fa-plus"></i> Add
+            </button>
+        </div>
+
+        <table class="table table-sm table-bordered table-light table-striped table-hover mb-3">
+            <thead>
+            <tr class="text-md-center align-middle">
+                <th width="50">#</th>
+                <th width="150">Date</th>
+                <th width="220">Vendor</th>
+                <th>Items</th>
+                <th width="120">Total Cost</th>
+                <th width="2%"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for bo in bos %}
+                <tr class="text-center align-middle" data-href="{% url 'buying' %}?t=od&opk={{ bo.pk }}">
+                    <th>{{ forloop.counter }}</th>
+                    <td>{{ bo.date|date:"Y-m-d" }}</td>
+                    <td>{{ bo.vendor.name }}</td>
+                    <td class="text-left" style="white-space:nowrap;">{{ bo|get_buying_detail|truncatechars:115|default:"None" }}</td>
+                    <td class="text-md-left">$
+                        <div style="float: right">{{ bo|get_buyingorder_total|floatformat:2}}</div>
+                    </td>
+                    <td><a href="#" class="text-secondary btn-del" data-key="{{ bo.pk }}">
+                            <i class="fas fa-minus-square"></i></a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <nav aria-label="Page navigation" class="mb-5">
+            <ul class="mt-2 pagination justify-content-end">
+                {# 上一页，这里需要用到has_previous方法判断是否有上一页 #}
+                <li class="page-item">
+                    <a href="{% url 'buying' %}?{{ url_get }}&p=1" class="page-link text-secondary"
+                       aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                {# 遍历所有页码 #}
+                {% for page in pages.page_range %}
+                    <li class="page-item"><a href="{% url 'buying' %}?{{ url_get }}&p={{ page }}"
+                                             class="page-link text-secondary">{{ page }}</a></li>
+                {% endfor %}
+
+                <li class="page-item">
+                    <a href="{% url 'buying' %}?{{ url_get }}&p={{ pages.num_pages }}" aria-label="Next"
+                       class="page-link text-secondary">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+
+{% endblock main %}
+
+{% block js %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(".table > tbody > tr").css('cursor', 'pointer').click(function () {
+                var link = $(this).data("href").trim();
+                if (link.length > 0)
+                // window.document.location = link;
+                    window.open(link, 'buying-detail');
+                return false;
+            });
+        });
+
+        $('.btn-del').click(function () {
+                var url = '{% url 'api' %}?t=buying-order-change&bopk=' + $(this).data('key');
+                if (confirm("This action CANNOT be restored,\n Are you sure??") === true) {
+                    $.ajax({
+                        method: 'DELETE',
+                        url: url,
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                        },
+                        success: function (ret) {
+                            console.log(ret);
+                            if (ret.is_success) {
+                              location.reload();
+                            }
+                        }
+                    });
+                }
+            });
+    </script>
+
+{% endblock js %}
