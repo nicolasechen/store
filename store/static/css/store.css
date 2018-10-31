@@ -1,0 +1,11 @@
+.input_to_label {
+     border: 0px !important;
+     background-color: #fcf8e3 !important;
+}
+
+.input_to_label_white {
+     border: 0px !important;
+     text-align:center;
+     font-weight:bold;
+     background-color: #ffffff !important;
+}
